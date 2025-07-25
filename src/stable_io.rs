@@ -80,7 +80,7 @@ impl turso_core::DatabaseStorage for StableDatabaseStorage {
             return Err(turso_core::LimboError::NotADB);
         }
         let pos = (page_idx - 1) * size;
-        self.file.pread(pos, c)?;
+        self.file.pread(pos, Arc::new(c))?;
         Ok(())
     }
 
@@ -92,12 +92,12 @@ impl turso_core::DatabaseStorage for StableDatabaseStorage {
     ) -> Result<()> {
         let size = buffer.borrow().len();
         let pos = (page_idx - 1) * size;
-        self.file.pwrite(pos, buffer, c)?;
+        self.file.pwrite(pos, buffer, Arc::new(c))?;
         Ok(())
     }
 
     fn sync(&self, c: turso_core::Completion) -> Result<()> {
-        let _ = self.file.sync(c)?;
+        let _ = self.file.sync(Arc::new(c))?;
         Ok(())
     }
 
@@ -120,7 +120,7 @@ impl File for StableFile {
         Ok(())
     }
 
-    fn pread(&self, pos: usize, c: Completion) -> Result<Arc<Completion>> {
+    fn pread(&self, pos: usize, c: Arc<Completion>) -> Result<Arc<Completion>> {
         let nr = {
             let r = c.as_read();
             let mut buf = r.buf_mut();
@@ -130,14 +130,14 @@ impl File for StableFile {
         };
         c.complete(nr);
         #[allow(clippy::arc_with_non_send_sync)]
-        Ok(Arc::new(c))
+        Ok(c)
     }
 
     fn pwrite(
         &self,
         pos: usize,
         buffer: Arc<RefCell<Buffer>>,
-        c: Completion,
+        c: Arc<Completion>,
     ) -> Result<Arc<Completion>> {
         let buf = buffer.borrow();
         let buf = buf.as_slice();
@@ -165,14 +165,14 @@ impl File for StableFile {
 
         c.complete(buf.len() as i32);
         #[allow(clippy::arc_with_non_send_sync)]
-        Ok(Arc::new(c))
+        Ok(c)
     }
 
-    fn sync(&self, c: Completion) -> Result<Arc<Completion>> {
+    fn sync(&self, c: Arc<Completion>) -> Result<Arc<Completion>> {
         // no-op
         c.complete(0);
         #[allow(clippy::arc_with_non_send_sync)]
-        Ok(Arc::new(c))
+        Ok(c)
     }
 
     fn size(&self) -> Result<u64> {
