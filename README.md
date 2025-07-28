@@ -1,6 +1,6 @@
 # ic-turso-bindings
 
-PoC bindings for running the SQLite compatible database [Turso](https://github.com/tursodatabase/turso) on ICP.  
+PoC bindings for running the SQLite compatible database [Turso](https://github.com/tursodatabase/turso) on ICP. The bindings are using [stable memory](https://internetcomputer.org/docs/motoko/icp-features/stable-memory/) as the store for the database.
 
 See the [ic-turso-demo](https://github.com/kristoferlund/ic-turso-demo) for details on how to set up Turso for the Internet Computer.
 
