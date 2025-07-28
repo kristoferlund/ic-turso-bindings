@@ -1,37 +1,3 @@
-//! # Turso bindings for Rust
-//!
-//! Turso is an in-process SQL database engine, compatible with SQLite.
-//!
-//! ## Getting Started
-//!
-//! To get started, you first need to create a [`Database`] object and then open a [`Connection`] to it, which you use to query:
-//!
-//! ```rust,no_run
-//! # async fn run() {
-//! use turso::Builder;
-//!
-//! let db = Builder::new_local(":memory:").build().await.unwrap();
-//! let conn = db.connect().unwrap();
-//! conn.execute("CREATE TABLE IF NOT EXISTS users (email TEXT)", ()).await.unwrap();
-//! conn.execute("INSERT INTO users (email) VALUES ('alice@example.org')", ()).await.unwrap();
-//! # }
-//! ```
-//!
-//! You can also prepare statements with the [`Connection`] object and then execute the [`Statement`] objects:
-//!
-//! ```rust,no_run
-//! # async fn run() {
-//! # use turso::Builder;
-//! # let db = Builder::new_local(":memory:").build().await.unwrap();
-//! # let conn = db.connect().unwrap();
-//! let mut stmt = conn.prepare("SELECT * FROM users WHERE email = ?1").await.unwrap();
-//! let mut rows = stmt.query(["foo@example.com"]).await.unwrap();
-//! let row = rows.next().await.unwrap().unwrap();
-//! let value = row.get_value(0).unwrap();
-//! println!("Row: {:?}", value);
-//! # }
-//! ```
-
 pub mod params;
 pub mod stable_io;
 pub mod transaction;
