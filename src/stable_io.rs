@@ -1,20 +1,24 @@
 use ic_stable_structures::{memory_manager::VirtualMemory, Ic0StableMemory, Memory};
-use turso_core::{Buffer, Clock, Completion, File, Instant, MemoryIO, OpenFlags, Result, IO};
+use turso_core::{
+    Buffer, Clock, Completion, File, Instant, LimboError, MemoryIO, OpenFlags, Result, IO,
+};
 
 use std::{cell::RefCell, sync::Arc};
 use tracing::debug;
 
+use crate::ThreeVirtualMemories;
+
 pub struct StableIO {
-    virtual_memory: VirtualMemory<Ic0StableMemory>,
+    memories: ThreeVirtualMemories,
 }
 unsafe impl Send for StableIO {}
 unsafe impl Sync for StableIO {}
 
 impl StableIO {
     #[allow(clippy::arc_with_non_send_sync)]
-    pub fn new(virtual_memory: VirtualMemory<Ic0StableMemory>) -> Self {
+    pub fn new(memories: ThreeVirtualMemories) -> Self {
         debug!("StableIO initializing with VirtualMemory");
-        Self { virtual_memory }
+        Self { memories }
     }
 }
 
@@ -29,9 +33,15 @@ impl Clock for StableIO {
 }
 
 impl IO for StableIO {
-    fn open_file(&self, _path: &str, _flags: OpenFlags, _direct: bool) -> Result<Arc<dyn File>> {
+    fn open_file(&self, path: &str, _flags: OpenFlags, _direct: bool) -> Result<Arc<dyn File>> {
+        let vm = match path {
+            "db" => &self.memories.0,
+            "db-wal" => &self.memories.1,
+            _ => return Err(LimboError::InternalError(format!("Unknown file: {}", path)).into()),
+        };
+
         Ok(Arc::new(StableFile {
-            virtual_memory: self.virtual_memory.clone(),
+            virtual_memory: vm.clone(),
         }))
     }
 

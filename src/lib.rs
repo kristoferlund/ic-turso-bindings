@@ -36,22 +36,28 @@ pub(crate) type BoxError = Box<dyn std::error::Error + Send + Sync>;
 
 pub type Result<T> = std::result::Result<T, Error>;
 
+pub type ThreeVirtualMemories = (
+    VirtualMemory<Ic0StableMemory>,
+    VirtualMemory<Ic0StableMemory>,
+    VirtualMemory<Ic0StableMemory>,
+);
+
 /// A builder for `Database`.
 pub struct Builder {
-    virtual_memory: VirtualMemory<Ic0StableMemory>,
+    memories: ThreeVirtualMemories,
 }
 
 impl Builder {
     /// Create a new local database.
-    pub fn with_memory(virtual_memory: VirtualMemory<Ic0StableMemory>) -> Self {
-        Self { virtual_memory }
+    pub fn with_memories(memories: ThreeVirtualMemories) -> Self {
+        Self { memories }
     }
 
     /// Build the database.
     #[allow(unused_variables, clippy::arc_with_non_send_sync)]
     pub async fn build(self) -> Result<Database> {
         let path = "db";
-        let io: Arc<dyn turso_core::IO> = Arc::new(StableIO::new(self.virtual_memory));
+        let io: Arc<dyn turso_core::IO> = Arc::new(StableIO::new(self.memories));
         let file = io.open_file(path, OpenFlags::Create, false).unwrap();
         let db_file = Arc::new(StableDatabaseStorage::new(file));
         let db = turso_core::Database::open(io, path, db_file, false, true).unwrap();
